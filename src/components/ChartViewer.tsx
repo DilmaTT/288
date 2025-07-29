@@ -58,14 +58,53 @@ export const ChartViewer = ({ isMobileMode = false, chart, allRanges, onBackToCh
   const [showMatrixDialog, setShowMatrixDialog] = useState(false);
   const [activeButton, setActiveButton] = useState<ChartButton | null>(null); // State to store the active button
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  const [dynamicBorderStyle, setDynamicBorderStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
+    const handleResize = () => {
+      setViewportSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+
     if (isMobileMode) {
-      const handleResize = () => {
-        setViewportSize({ width: window.innerWidth, height: window.innerHeight });
-      };
       handleResize();
       window.addEventListener('resize', handleResize);
+    }
+
+    // Universal border style calculation
+    try {
+      // This code runs on the client, so `window` and `document` are available.
+      const bgHslString = getComputedStyle(document.documentElement).getPropertyValue('--background').trim();
+      if (!bgHslString) return;
+
+      const parts = bgHslString.replace(/%/g, '').split(' ');
+      if (parts.length < 3) return;
+
+      const h = parseFloat(parts[0]);
+      const s = parseFloat(parts[1]);
+      const l = parseFloat(parts[2]);
+
+      if (isNaN(h) || isNaN(s) || isNaN(l)) return;
+
+      // "30% brighter" -> L' = L + (100 - L) * 0.3
+      const newL = l + (100 - l) * 0.3;
+      const newBorderColor = `hsl(${h} ${s}% ${Math.min(100, newL)}%)`;
+
+      setDynamicBorderStyle({
+        borderColor: newBorderColor,
+        borderWidth: '1px', // Half of the original 2px
+        borderStyle: 'solid'
+      });
+    } catch (error) {
+      console.error("Could not calculate dynamic border color, falling back.", error);
+      // Fallback style in case of any error
+      setDynamicBorderStyle({
+        borderColor: 'hsl(var(--border))',
+        borderWidth: '1px',
+        borderStyle: 'solid'
+      });
+    }
+
+    if (isMobileMode) {
       return () => window.removeEventListener('resize', handleResize);
     }
   }, [isMobileMode]);
@@ -122,16 +161,17 @@ export const ChartViewer = ({ isMobileMode = false, chart, allRanges, onBackToCh
           isMobileMode ? "w-full h-full flex flex-col items-center justify-center" : "w-full flex justify-center items-start"
         )}>
           <div
-            className="relative border-2 border-solid border-muted-foreground rounded-lg bg-card flex items-center justify-center overflow-hidden"
-            style={isMobileMode ? {
+            className="relative bg-card flex items-center justify-center overflow-hidden rounded-lg"
+            style={{
               width: chart.canvasWidth,
               height: chart.canvasHeight,
-              transform: `scale(${scale})`,
-              transformOrigin: 'center center',
-            } : {
-              width: chart.canvasWidth,
-              height: chart.canvasHeight,
-              flexShrink: 0,
+              ...dynamicBorderStyle,
+              ...(isMobileMode ? {
+                transform: `scale(${scale})`,
+                transformOrigin: 'center center',
+              } : {
+                flexShrink: 0,
+              })
             }}
           >
             {chart.buttons.map((button) => (
