@@ -116,11 +116,10 @@ export const ChartViewer = ({ isMobileMode = false, chart, allRanges, onBackToCh
         "p-6",
         isMobileMode
           ? "fixed inset-0 z-50 flex flex-col items-center justify-center bg-background p-2"
-          : "min-h-screen flex items-center justify-center" // For desktop, use flex to center the canvas
+          : "min-h-screen"
       )}>
         <div className={cn(
-          // This div is for mobile scaling. For desktop, it's just a simple wrapper.
-          isMobileMode ? "w-full h-full flex flex-col items-center justify-center" : ""
+          isMobileMode ? "w-full h-full flex flex-col items-center justify-center" : "w-full flex justify-center items-start"
         )}>
           <div
             className="relative border-2 border-solid border-muted-foreground rounded-lg bg-card flex items-center justify-center overflow-hidden"
@@ -132,7 +131,7 @@ export const ChartViewer = ({ isMobileMode = false, chart, allRanges, onBackToCh
             } : {
               width: chart.canvasWidth,
               height: chart.canvasHeight,
-              flexShrink: 0, // Prevent canvas from shrinking if viewport is smaller
+              flexShrink: 0,
             }}
           >
             {chart.buttons.map((button) => (

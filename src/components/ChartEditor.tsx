@@ -469,20 +469,14 @@ export const ChartEditor = ({ isMobileMode = false, chart, onBackToCharts, onSav
   };
 
   const handleMaximizeCanvas = () => {
-    if (isMobileMode) return;
-
-    if (canvasRef.current) {
-      const canvasTop = canvasRef.current.getBoundingClientRect().top;
-      // Calculate available height: viewport height - space above canvas - bottom padding (24px from p-6)
-      const availableHeight = window.innerHeight - canvasTop - 24;
-
-      // The canvas is inside a div that should span the width of the padded container.
-      const contentWrapper = canvasRef.current.parentElement;
-      if (contentWrapper) {
-        setCanvasWidth(contentWrapper.clientWidth);
-      }
-      
-      setCanvasHeight(availableHeight > MIN_CANVAS_DIMENSION ? availableHeight : MIN_CANVAS_DIMENSION);
+    if (!isMobileMode) {
+      // On desktop, apply the specified scaling factors to account for UI elements
+      setCanvasWidth(Math.round(window.innerWidth * 0.97));
+      setCanvasHeight(Math.round(window.innerHeight * 0.91));
+    } else {
+      // On mobile, use the full viewport size as before.
+      setCanvasWidth(window.innerWidth);
+      setCanvasHeight(window.innerHeight);
     }
   };
 
